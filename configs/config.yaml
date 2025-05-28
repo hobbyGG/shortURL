@@ -1,6 +1,6 @@
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8090
     timeout: 1s
   grpc:
     addr: 0.0.0.0:9000
@@ -8,8 +8,10 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/test?parseTime=True&loc=Local
+    source: root:123@tcp(127.0.0.1:13306)/short_url?parseTime=True&loc=Local
   redis:
-    addr: 127.0.0.1:6379
+    addr: 127.0.0.1:16379
     read_timeout: 0.2s
     write_timeout: 0.2s
+biz:
+  domain: 127.0.0.1:8090

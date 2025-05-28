@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package api.shorturl.v1;
+
+option go_package = "shorturl/api/shorturl/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.shorturl.v1";
+
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+service ShortURL {
+	// 转链服务
+	rpc Convert(ConvertRequest) returns (ConvertResponse) {}
+
+	// 根据短链跳转至指定地址
+	rpc Redirect(RedirectRequest) returns (RedirectResponse) {
+		option (google.api.http) = {
+			get: "/{shortURL}"
+		};
+	}
+}
+
+message ConvertRequest {
+	string longURL = 1 [(validate.rules).string.min_len = 1];
+}
+message ConvertResponse {
+	string shortURL = 1;
+}
+
+message RedirectRequest {
+	string shortURL = 1 [(validate.rules).string.min_len = 1];
+}
+message RedirectResponse {
+	string longURL = 1;
+}

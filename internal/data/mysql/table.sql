@@ -1,0 +1,13 @@
+CREATE TABLE short_url_map (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `create_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `id_del` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `lurl` VARCHAR(160) DEFAULT NULL,
+    `lurl_md5` VARCHAR(64) DEFAULT NULL,
+    `surl` VARCHAR(12) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE (`lurl`, `id_del`),
+    UNIQUE (`surl`),
+    INDEX idx_surl_lurl (`lurl`, `surl`)
+);
