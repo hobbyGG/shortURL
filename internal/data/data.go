@@ -10,12 +10,15 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
+	"github.com/zeromicro/go-zero/core/bloom"
+	redix "github.com/zeromicro/go-zero/core/stores/redis"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewShortURLRepo, NewDB, NewRedisCli, sequence.NewSeqUseCase)
+var ProviderSet = wire.NewSet(NewData, NewShortURLRepo, NewDB, NewRedisCli, NewBloomFilter, sequence.NewSeqUseCase)
 
 // Data .
 type Data struct {
@@ -33,7 +36,10 @@ func NewData(c *conf.Data, db *gorm.DB, rdb *redis.Client, logger log.Logger) (*
 	return &Data{mdb: query.Q, rdb: rdb}, cleanup, nil
 }
 func NewDB(conf *conf.Data) *gorm.DB {
-	db, err := gorm.Open(mysql.Open(conf.Database.Source))
+	db, err := gorm.Open(mysql.Open(conf.Database.Source), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Warn),
+	},
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -43,10 +49,16 @@ func NewRedisCli(conf *conf.Data) *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: conf.Redis.Addr,
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		panic(err)
 	}
 	return rdb
+}
+func NewBloomFilter(conf *conf.Data) *bloom.Filter {
+	store := redix.New(conf.Redis.Addr, func(r *redix.Redis) {
+		r.Type = redix.NodeType
+	})
+	return bloom.New(store, "bloomFilter", 1000000)
 }

@@ -8,16 +8,19 @@ import (
 	pb "shortURL/api/shorturl/v1"
 	"shortURL/internal/biz"
 	"shortURL/third_party/httpx"
+
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 type ShortURLService struct {
 	pb.UnimplementedShortURLServer
 
-	uc *biz.ShortURLUsecase
+	uc  *biz.ShortURLUsecase
+	log *log.Helper
 }
 
-func NewShortURLService(uc *biz.ShortURLUsecase) *ShortURLService {
-	return &ShortURLService{uc: uc}
+func NewShortURLService(uc *biz.ShortURLUsecase, logger log.Logger) *ShortURLService {
+	return &ShortURLService{uc: uc, log: log.NewHelper(logger)}
 }
 
 func (s *ShortURLService) Convert(ctx context.Context, req *pb.ConvertRequest) (*pb.ConvertResponse, error) {
@@ -56,6 +59,7 @@ func (s *ShortURLService) Redirect(ctx context.Context, req *pb.RedirectRequest)
 
 	longURL, err := s.uc.Redirect(ctx, surl)
 	if err != nil {
+		s.log.Debugw("[service] Redirect shortURL", shortURL, "err", err)
 		return &pb.RedirectResponse{}, err
 	}
 

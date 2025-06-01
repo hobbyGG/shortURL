@@ -11,7 +11,7 @@ data:
     source: root:123@tcp(127.0.0.1:13306)/short_url?parseTime=True&loc=Local
   redis:
     addr: 127.0.0.1:16379
-    read_timeout: 0.2s
-    write_timeout: 0.2s
+    read_timeout: 3s
+    write_timeout: 3s
 biz:
   domain: 127.0.0.1:8090
