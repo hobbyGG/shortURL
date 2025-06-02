@@ -10,8 +10,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
-	"github.com/zeromicro/go-zero/core/bloom"
-	redix "github.com/zeromicro/go-zero/core/stores/redis"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -46,8 +44,9 @@ func NewDB(conf *conf.Data) *gorm.DB {
 	return db
 }
 func NewRedisCli(conf *conf.Data) *redis.Client {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: conf.Redis.Addr,
+	rdb := redis.NewFailoverClient(&redis.FailoverOptions{
+		MasterName:    "mymaster",
+		SentinelAddrs: conf.Redis.Addr,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -56,9 +55,5 @@ func NewRedisCli(conf *conf.Data) *redis.Client {
 	}
 	return rdb
 }
-func NewBloomFilter(conf *conf.Data) *bloom.Filter {
-	store := redix.New(conf.Redis.Addr, func(r *redix.Redis) {
-		r.Type = redix.NodeType
-	})
-	return bloom.New(store, "bloomFilter", 1000000)
+func NewBloomFilter(conf *conf.Data) {
 }

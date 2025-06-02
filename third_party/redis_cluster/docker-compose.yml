@@ -1,0 +1,155 @@
+services:
+  redis-master:
+    image: redis:7.4.2
+    ports:
+      - "16380:6379"
+    networks:
+      - redis-cluster
+    volumes:
+      - ./data/master:/data
+    environment:
+      - REDIS_APPENDONLY=yes
+      - REDIS_APPENDSYNC=everysec
+      - REDIS_REPLICATION=master
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  redis-slaver1:
+    image: redis:7.4.2
+    ports:
+      - "16381:6379"
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_REPLICAOF=redis-master 6379
+      - REDIS_REPLICA_READONLY=yes
+      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
+    volumes:
+      - ./data/sl1:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      redis-master:
+        condition: service_healthy
+  redis-slaver2:
+    image: redis:7.4.2
+    ports:
+      - "16382:6379"
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_REPLICAOF=redis-master 6379
+      - REDIS_REPLICA_READONLY=yes
+      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
+    volumes:
+      - ./data/sl2:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      redis-master:
+        condition: service_healthy
+  redis-slaver3:
+    image: redis:7.4.2
+    ports:
+      - "16383:6379"
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_REPLICAOF=redis-master 6379
+      - REDIS_REPLICA_READONLY=yes
+      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
+    volumes:
+      - ./data/sl3:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  redis-sentinell:
+    image: redis:7.4.2
+    ports:
+      - "26379:26379"
+    networks:
+      - redis-cluster
+    volumes:
+      - ./sentinel/s1/sentinel.conf:/usr/local/etc/redis/sentinel.conf # 挂载配置文件
+      - ./data/s1:/data
+    command: [ "redis-sentinel", "/usr/local/etc/redis/sentinel.conf" ]
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slaver1:
+        condition: service_healthy
+      redis-slaver2:
+        condition: service_healthy
+      redis-slaver3:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  redis-sentinel2:
+    image: redis:7.4.2
+    ports:
+      - "26380:26379"
+    networks:
+      - redis-cluster
+    volumes:
+      - ./sentinel/s2/sentinel.conf:/usr/local/etc/redis/sentinel.conf # 挂载配置文件
+      - ./data/s2:/data
+    command: [ "redis-sentinel", "/usr/local/etc/redis/sentinel.conf" ]
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slaver1:
+        condition: service_healthy
+      redis-slaver2:
+        condition: service_healthy
+      redis-slaver3:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  redis-sentinel3:
+    image: redis:7.4.2
+    ports:
+      - "26381:26379"
+    networks:
+      - redis-cluster
+    volumes:
+      - ./sentinel/s3/sentinel.conf:/usr/local/etc/redis/sentinel.conf # 挂载配置文件
+      - ./data/s3:/data
+    command: [ "redis-sentinel", "/usr/local/etc/redis/sentinel.conf" ]
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slaver1:
+        condition: service_healthy
+      redis-slaver2:
+        condition: service_healthy
+      redis-slaver3:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  redis-cluster:
+    driver: bridge

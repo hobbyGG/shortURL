@@ -20,10 +20,10 @@ func TestRedirect(t *testing.T) {
 		t.Fatal(err)
 	}
 	client := v1.NewShortURLClient(conn)
-	shorURL := "127.0.0.1:9000/f"
+	shorURL := "127.0.0.1:9000/3"
 	wg := sync.WaitGroup{}
-	wg.Add(1000)
-	for range 1000 {
+	wg.Add(10000)
+	for range 10000 {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer cancel()

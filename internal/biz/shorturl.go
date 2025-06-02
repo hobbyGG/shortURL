@@ -34,7 +34,6 @@ type ShortURLUsecase struct {
 	log          *log.Helper
 	validCharMap map[rune]struct{}
 	domain       string
-	bf           *bloom.Filter
 }
 
 func NewShortURLUsecase(conf *conf.Biz, repo ShortURLRepo, seq SequenceUseCase, bf *bloom.Filter, logger log.Logger) *ShortURLUsecase {
@@ -52,7 +51,7 @@ func NewShortURLUsecase(conf *conf.Biz, repo ShortURLRepo, seq SequenceUseCase, 
 	for _, v := range urls {
 		bf.Add([]byte(v))
 	}
-	return &ShortURLUsecase{repo: repo, seq: seq, validCharMap: m, domain: conf.Domain, bf: bf, log: log.NewHelper(logger)}
+	return &ShortURLUsecase{repo: repo, seq: seq, validCharMap: m, domain: conf.Domain, log: log.NewHelper(logger)}
 }
 
 // Convert 接收一个有效长连接，将长连接转为短连接并存入mysql数据库，返回短连接和错误。
@@ -92,7 +91,6 @@ func (uc *ShortURLUsecase) Convert(ctx context.Context, longURL string) (string,
 		sURLChar = append(sURLChar, baseStr[i])
 	}
 
-	uc.bf.Add(sURLChar)
 	if err := uc.repo.CreateSLMap(ctx, string(sURLChar), longURL); err != nil {
 		return "", err
 	}
@@ -121,17 +119,6 @@ func (uc *ShortURLUsecase) Redirect(ctx context.Context, shortURL string) (strin
 		}
 	}
 
-	// bloom过滤
-	ok, err := uc.bf.ExistsCtx(ctx, []byte(shortURL))
-	if err != nil {
-		uc.log.Debugw("[biz] bloom filter", err)
-		return "", err
-	}
-	if !ok {
-		// 不在过滤器中表示一定不存在
-		return "", errors.New("shortURL not existed")
-	}
-
 	// 先查看缓存是否有短链接对应的长链接记录
 	key := strings.Builder{}
 	key.WriteString(param.KeyPreffix)
@@ -139,7 +126,8 @@ func (uc *ShortURLUsecase) Redirect(ctx context.Context, shortURL string) (strin
 	sfg := singleflight.Group{}
 
 	// Do直接返回结果，DoChan会返回一个chan，支持异步调用，防止一个请求导致所有请求堵塞
-	longURL, err, shared := sfg.Do("Redirect", func() (interface{}, error) {
+	longURL, err, shared := sfg.Do("redirect:"+shortURL, func() (interface{}, error) {
+
 		longURL, err := uc.repo.RediGet(ctx, key.String())
 		if err == nil {
 			uc.log.Infow("[biz] redis", "hit")
@@ -161,6 +149,7 @@ func (uc *ShortURLUsecase) Redirect(ctx context.Context, shortURL string) (strin
 		return "", err
 	})
 	if err != nil {
+		uc.log.Debugw("[biz] Redirect singleflight:", err)
 		return "", err
 	}
 	uc.log.Infow("[biz] shared", shared)
