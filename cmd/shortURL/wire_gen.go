@@ -33,8 +33,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confBiz *conf.Biz, lo
 	}
 	shortURLRepo := data.NewShortURLRepo(dataData, logger)
 	sequenceUseCase := sequence.NewSeqUseCase(client)
-	filter := data.NewBloomFilter(confData)
-	shortURLUsecase := biz.NewShortURLUsecase(confBiz, shortURLRepo, sequenceUseCase, filter, logger)
+	shortURLUsecase := biz.NewShortURLUsecase(confBiz, shortURLRepo, sequenceUseCase, logger)
 	shortURLService := service.NewShortURLService(shortURLUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, shortURLService, logger)
 	httpServer := server.NewHTTPServer(confServer, shortURLService, logger)
