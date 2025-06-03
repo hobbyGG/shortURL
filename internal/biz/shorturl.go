@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/redis/go-redis/v9"
-	"github.com/zeromicro/go-zero/core/bloom"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -36,21 +35,13 @@ type ShortURLUsecase struct {
 	domain       string
 }
 
-func NewShortURLUsecase(conf *conf.Biz, repo ShortURLRepo, seq SequenceUseCase, bf *bloom.Filter, logger log.Logger) *ShortURLUsecase {
+func NewShortURLUsecase(conf *conf.Biz, repo ShortURLRepo, seq SequenceUseCase, logger log.Logger) *ShortURLUsecase {
 	m := make(map[rune]struct{}, 62)
 	baseString := "VJ7y3fWdPZ9tSqEa8uN4XcGQnH2LxK6w15iFbO0rDkYgBmTzIeMhRvUoJlC"
 	for _, v := range baseString {
 		m[v] = struct{}{}
 	}
 
-	// 填充bloom过滤器
-	urls, err := repo.GetShortURLs(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	for _, v := range urls {
-		bf.Add([]byte(v))
-	}
 	return &ShortURLUsecase{repo: repo, seq: seq, validCharMap: m, domain: conf.Domain, log: log.NewHelper(logger)}
 }
 

@@ -7,27 +7,24 @@ services:
       - redis-cluster
     volumes:
       - ./data/master:/data
-    environment:
-      - REDIS_APPENDONLY=yes
-      - REDIS_APPENDSYNC=everysec
-      - REDIS_REPLICATION=master
+      - ./node/master/redis.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
+
   redis-slaver1:
     image: redis:7.4.2
     ports:
       - "16381:6379"
     networks:
       - redis-cluster
-    environment:
-      - REDIS_REPLICAOF=redis-master 6379
-      - REDIS_REPLICA_READONLY=yes
-      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
     volumes:
       - ./data/sl1:/data
+      - ./node/s1/redis.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
@@ -42,12 +39,10 @@ services:
       - "16382:6379"
     networks:
       - redis-cluster
-    environment:
-      - REDIS_REPLICAOF=redis-master 6379
-      - REDIS_REPLICA_READONLY=yes
-      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
     volumes:
       - ./data/sl2:/data
+      - ./node/s2/redis.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
@@ -62,12 +57,10 @@ services:
       - "16383:6379"
     networks:
       - redis-cluster
-    environment:
-      - REDIS_REPLICAOF=redis-master 6379
-      - REDIS_REPLICA_READONLY=yes
-      - REDIS_REPLICA_SERVER_STABLE_DATA=yes
     volumes:
       - ./data/sl3:/data
+      - ./node/s3/redis.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s

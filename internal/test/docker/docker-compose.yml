@@ -1,0 +1,25 @@
+services:
+  redis-master:
+    image: redis:7.4.2
+    ports:
+      - "16379:6379"
+    volumes:
+      - "./conf/master/redis.conf:/usr/local/etc/redis/redis.conf"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  redis-slave:
+    image: redis:7.4.2
+    ports:
+      - "16380:6379"
+    volumes:
+      - "./conf/slave/redis.conf:/usr/local/etc/redis/redis.conf"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    depends_on:
+      redis-master:
+        condition: service_healthy

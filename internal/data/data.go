@@ -16,7 +16,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewShortURLRepo, NewDB, NewRedisCli, NewBloomFilter, sequence.NewSeqUseCase)
+var ProviderSet = wire.NewSet(NewData, NewShortURLRepo, NewDB, NewRedisCli, sequence.NewSeqUseCase)
 
 // Data .
 type Data struct {
@@ -54,6 +54,4 @@ func NewRedisCli(conf *conf.Data) *redis.Client {
 		panic(err)
 	}
 	return rdb
-}
-func NewBloomFilter(conf *conf.Data) {
 }
