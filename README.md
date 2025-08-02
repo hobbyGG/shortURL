@@ -1,51 +1,33 @@
-# Kratos Project Template
+# 短链接服务
 
-## Install Kratos
-```
-go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
-```
-## Create a service
-```
-# Create a template project
-kratos new server
+**技术栈**：
+ - 框架: Kratos, Gorm Gen, go-redis
+ - 中间件: MySQL, Redis
 
-cd server
-# Add a proto template
-kratos proto add api/server/server.proto
-# Generate the proto code
-kratos proto client api/server/server.proto
-# Generate the source code of service by proto file
-kratos proto server api/server/server.proto -t internal/service
+## 为什么需要短链服务
 
-go generate ./...
-go build -o ./bin/ ./...
-./bin/server -conf ./configs
-```
-## Generate other auxiliary files by Makefile
-```
-# Download and update dependencies
-make init
-# Generate API files (include: pb.go, http, grpc, validate, swagger) by proto file
-make api
-# Generate all files
-make all
-```
-## Automated Initialization (wire)
-```
-# install wire
-go get github.com/google/wire/cmd/wire
+我们以给用户发送营销信息为背景。
 
-# generate wire
-cd cmd/server
-wire
-```
+1. 长链接会导致对话框内容冗长，用户不易获取关键信息并且会使得用户没有看消息的欲望，而短连接有效缩短了对话框的内容，信息明了，用户一眼就能了解核心内容。
+2. 当相机差或者软件扫一扫性能不佳，长链接转的二维码图像复杂，难以识别，而短链接生成的二维码图像简单，容易识别。
+3. 长链接有时会将信息放在URL中，导致链接非常长，不仅流量占用更高，且不易使用，直接转为短链可以更好降低负载。
 
-## Docker
-```bash
-# build
-docker build -t <your-docker-image-name> .
+综上所述，短链服务的需求十分常见且实用，值得花时间实现一个短链服务系统。
 
-# run
-docker run --rm -p 8000:8000 -p 9000:9000 -v </path/to/your/configs>:/data/conf <your-docker-image-name>
-```
+## 项目整体架构
 
+...
+
+
+目前提供的接口：
+
+- Convert：接收长链，返回对应唯一短链接
+- Redirect：接收短链，返回302响应与对应长链接
+
+## 计划要做的
+
+1. 将单实例MySQL改为一主多从MySQL集群
+2. 使用docker-compose编排多个服务
+3. 为该微服务编写简单gateway，实现将流量均摊到各服务的功能
+4. 加入Prometheus监控，位置应该在gateway中，统计每个接口的访问情况
+5. 使用etcd实现配置中心实现一键配置
